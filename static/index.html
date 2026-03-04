@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PurriFlow - Audio Transcription</title>
+    <link rel="stylesheet" href="/static/style.css?v=6">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+</head>
+
+<body>
+    <!-- Animated background orbs -->
+    <div class="bg-orbs">
+        <div class="orb orb-1"></div>
+        <div class="orb orb-2"></div>
+        <div class="orb orb-3"></div>
+    </div>
+
+    <div class="app-container">
+        <!-- Header -->
+        <header class="header">
+            <h1>PurriFlow</h1>
+            <p>Next-gen audio transcription powered by <a href="https://purrify.ca">purrify.ca</a></p>
+        </header>
+
+        <!-- Main Workspace -->
+        <main>
+            <!-- Upload Panel -->
+            <section class="glass-panel upload-wrapper">
+                <div class="upload-area" id="uploadArea">
+                    <div class="upload-icon">
+                        <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="url(#iconGradient)"
+                            stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                            <defs>
+                                <linearGradient id="iconGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                                    <stop offset="0%" style="stop-color:#8b5cf6" />
+                                    <stop offset="100%" style="stop-color:#ec4899" />
+                                </linearGradient>
+                            </defs>
+                            <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z" />
+                            <path d="M19 10v2a7 7 0 0 1-14 0v-2" />
+                            <line x1="12" x2="12" y1="19" y2="22" />
+                        </svg>
+                    </div>
+                    <div class="upload-text">
+                        <h3>Drop Audio Files Here</h3>
+                        <p>MP3, WAV, M4A, FLAC, OGG supported</p>
+                    </div>
+                </div>
+                <input type="file" id="fileInput" accept="audio/*" multiple hidden>
+
+                <!-- Mode Selection Cards -->
+                <div class="mode-section">
+                    <h4 class="section-label">Processing Mode</h4>
+                    <div class="mode-cards" id="modeCards">
+                        <label class="mode-card selected" data-engine="whisper">
+                            <input type="radio" name="engine" value="whisper" checked>
+                            <div class="mode-card-inner">
+                                <div class="mode-icon">
+                                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                        stroke-width="2">
+                                        <circle cx="12" cy="12" r="10" />
+                                        <path d="m9 12 2 2 4-4" />
+                                    </svg>
+                                </div>
+                                <div class="mode-info">
+                                    <span class="mode-name">FREE</span>
+                                    <span class="mode-desc">Local Whisper - Good quality</span>
+                                </div>
+                                <span class="mode-badge badge-available">Ready</span>
+                            </div>
+                        </label>
+
+                        <label class="mode-card" data-engine="openai">
+                            <input type="radio" name="engine" value="openai">
+                            <div class="mode-card-inner">
+                                <div class="mode-icon">
+                                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                        stroke-width="2">
+                                        <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
+                                    </svg>
+                                </div>
+                                <div class="mode-info">
+                                    <span class="mode-name">Fast</span>
+                                    <span class="mode-desc">OpenAI API - Cloud speed</span>
+                                </div>
+                                <span class="mode-badge badge-unavailable">API Key Required</span>
+                            </div>
+                        </label>
+
+                        <label class="mode-card" data-engine="deepgram">
+                            <input type="radio" name="engine" value="deepgram">
+                            <div class="mode-card-inner">
+                                <div class="mode-icon">
+                                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                        stroke-width="2">
+                                        <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" />
+                                        <path d="M17 2L7 14h9l-1 8 10-12h-9l1-8z" opacity="0.5" />
+                                    </svg>
+                                </div>
+                                <div class="mode-info">
+                                    <span class="mode-name">Multilingual Quality</span>
+                                    <span class="mode-desc">Deepgram - Transcription only</span>
+                                </div>
+                                <span class="mode-badge badge-unavailable">API Key Required</span>
+                            </div>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Options Row -->
+                <div class="options-row">
+                    <!-- Language Selection -->
+                    <div class="option-group">
+                        <label>Language</label>
+                        <select id="languageSelect" class="option-select">
+                            <option value="auto">Auto-detect</option>
+                            <option value="en">English</option>
+                            <option value="fr">French</option>
+                            <option value="hr">Croatian</option>
+                            <option value="es">Spanish</option>
+                            <option value="de">German</option>
+                            <option value="it">Italian</option>
+                            <option value="pt">Portuguese</option>
+                        </select>
+                    </div>
+
+                    <!-- Output Name -->
+                    <div class="option-group output-name-group">
+                        <label>Output Name</label>
+                        <input type="text" id="outputName" class="option-input" placeholder="(optional)">
+                    </div>
+                </div>
+
+                <div class="options-row"
+                    style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid rgba(255, 255, 255, 0.1);">
+                    <div class="option-group"
+                        style="flex-direction: row; align-items: center; justify-content: flex-start; gap: 0.5rem; width: 100%;">
+                        <input type="checkbox" id="translateCheckbox" checked
+                            style="width: 1.2rem; height: 1.2rem; appearance: auto;">
+                        <label for="translateCheckbox" style="margin: 0; cursor: pointer;">Transcribe AND translate (to
+                            English)</label>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Jobs List -->
+            <section id="jobsSection" style="display: none; margin-top: 3rem;">
+                <h2 style="margin-bottom: 1.5rem; font-size: 1.25rem;">Active Jobs</h2>
+                <div class="jobs-list" id="jobsContainer">
+                    <!-- Dynamic Job Cards -->
+                </div>
+            </section>
+        </main>
+
+        <!-- Footer -->
+        <footer>
+            <p>Running locally at <code>localhost:8080</code></p>
+        </footer>
+    </div>
+
+    <script src="/static/app.js?v=6"></script>
+</body>
+
+</html>

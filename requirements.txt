@@ -1,0 +1,5 @@
+faster-whisper
+flask
+flask-cors
+python-dotenv
+httpx
