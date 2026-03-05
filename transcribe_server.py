@@ -34,8 +34,12 @@ app = Flask(__name__, static_folder='static')
 # CORS configuration - restrict to specific origins
 # Set CORS_ORIGINS environment variable to comma-separated list of allowed origins
 # Default: localhost only for development
-ALLOWED_ORIGINS = os.getenv("CORS_ORIGINS", "http://localhost:8080,http://127.0.0.1:8080").split(",")
-CORS(app, origins=ALLOWED_ORIGINS)
+ALLOWED_ORIGINS_ENV = os.getenv("CORS_ORIGINS", "http://localhost:8080,http://127.0.0.1:8080")
+if ALLOWED_ORIGINS_ENV == "*":
+    CORS(app, resources={r"/*": {"origins": "*"}})
+else:
+    ALLOWED_ORIGINS = ALLOWED_ORIGINS_ENV.split(",")
+    CORS(app, origins=ALLOWED_ORIGINS)
 
 # Configuration
 MODEL_PATH = "large-v3"
