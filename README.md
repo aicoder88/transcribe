@@ -50,7 +50,7 @@ All processed files are saved in the `outputs/` directory:
 
 ## Technical Details
 
-- **Model:** Whisper large-v3
+- **Model:** [Whisper large-v3 (Systran faster-whisper)](https://huggingface.co/Systran/faster-whisper-large-v3)
 - **Backend:** Flask + faster-whisper
 - **Frontend:** Vanilla HTML/CSS/JavaScript
 - **Processing:** Background threads with real-time status updates
