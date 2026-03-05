@@ -1,6 +1,6 @@
 # Audio Transcription & Translation Interface
 
-Easy-to-use web interface for transcribing French audio files and translating them to English using OpenAI's Whisper large-v3 model.
+Easy-to-use web interface for transcribing English, French, Croatian, or other language audio files and then translating them to English using OpenAI's Whisper large-v3 model.
 
 ## Features
 
