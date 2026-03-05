@@ -16,24 +16,42 @@ Easy-to-use web interface for transcribing French audio files and translating th
 
 M4A, MP3, WAV, FLAC, OGG, and more
 
-## Quick Start
+## 🚀 How to Install and Run Locally
 
-1. **Start the server:**
+**No manual model downloads required!** The server will automatically download the Whisper AI models (roughly 3GB) directly to your computer the very first time you process a file. 
+
+### Prerequisites
+1. **Python 3.13+** installed on your computer.
+2. **FFmpeg** installed (Mac: `brew install ffmpeg`, Windows: `winget install ffmpeg`).
+
+### Installation
+1. **Clone this repository:**
    ```bash
-   ./start_server.sh
+   git clone https://github.com/aicoder88/transcribe.git
+   cd transcribe
    ```
 
-2. **Open your browser:**
-   Navigate to `http://localhost:8080`
+2. **Set up the Python Environment:**
+   Run these commands to create an isolated environment and install the required packages:
+   ```bash
+   python3 -m venv venv
+   source venv/bin/activate  # (On Windows, use: venv\Scripts\activate)
+   pip install -r requirements.txt
+   ```
 
-3. **Upload audio files:**
-   - Drag and drop files onto the upload area, or
-   - Click to browse and select files
+3. **Start the server:**
+   ```bash
+   ./start_server.sh
+   # Note: On Windows, use `python transcribe_server.py` instead.
+   ```
 
-4. **Wait for processing:**
-   - Watch real-time progress
-   - View transcription and translation results
-   - Download output files
+4. **Open your browser:**
+   Navigate to [http://localhost:8080](http://localhost:8080)
+
+5. **Upload audio files:**
+   - The first time you process a file, the server will briefly pause to download the Whisper AI model to your computer automatically.
+   - Simply drag and drop files onto the upload area.
+   - Watch real-time progress and download output files!
 
 ## Output Files
 
