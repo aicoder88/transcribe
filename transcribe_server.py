@@ -86,21 +86,34 @@ def get_job_value(job_id, key, default=None):
         return default
 
 
-def load_whisper_model():
-    """Load the Whisper model (called once at startup)"""
-    global whisper_model
-    logger.info("Loading Whisper large-v3 model...")
-    logger.info("This may take a moment on first run...")
+def load_whisper_model(model_name=None):
+    """Load the Whisper model (called once at startup and when model changes)"""
+    global whisper_model, MODEL_PATH
+    
+    with model_lock:
+        if model_name is None:
+            model_name = "large-v3"
+            
+        if whisper_model is not None and MODEL_PATH == model_name:
+            return  # Model already loaded
+            
+        if whisper_model is not None:
+            logger.info(f"Unloading current model: {MODEL_PATH}")
+            del whisper_model
+            whisper_model = None
+            
+        MODEL_PATH = model_name
+        logger.info(f"Loading Whisper model: {MODEL_PATH}...")
+        logger.info("This may take a moment...")
 
-    # Apple Silicon M1 - use CPU with int8 for best quality and memory
-    # Note: faster-whisper doesn't support MPS directly, but int8 on M1 CPU is fast
-    whisper_model = WhisperModel(
-        MODEL_PATH,
-        device="cpu",
-        compute_type="int8",  # Best memory usage
-        download_root="."
-    )
-    logger.info("Model loaded successfully!")
+        # Apple Silicon M1 - use CPU with int8 for best quality and memory
+        whisper_model = WhisperModel(
+            MODEL_PATH,
+            device="cpu",
+            compute_type="int8",  # Best memory usage
+            download_root="."
+        )
+        logger.info(f"Model {MODEL_PATH} loaded successfully!")
 
 
 def update_job_progress(job_id, progress, current_task, audio_processed=None):
@@ -144,10 +157,13 @@ def update_job_progress(job_id, progress, current_task, audio_processed=None):
                 jobs[job_id]["estimated_remaining"] = max(0, int(remaining_seconds))
 
 
-def transcribe_with_whisper(job_id, audio_path, filename, source_language, output_name, resume_from_timestamp=0.0, existing_text=None, translate=True):
+def transcribe_with_whisper(job_id, audio_path, filename, source_language, output_name, resume_from_timestamp=0.0, existing_text=None, translate=True, whisper_model_name="large-v3"):
     """Process audio file using local Whisper model"""
     try:
-        update_job(job_id, status="processing", progress=2, current_task="Initializing Whisper...")
+        update_job(job_id, status="processing", progress=2, current_task=f"Initializing Whisper ({whisper_model_name})...")
+        
+        # Ensure the requested model is loaded
+        load_whisper_model(whisper_model_name)
 
         # Handle auto-detection
         auto_detect = source_language == "auto" or source_language is None
@@ -613,6 +629,7 @@ def upload_file():
     engine = request.form.get('engine', 'whisper')
     output_name = request.form.get('output_name', '').strip()
     resume_partial_json = request.form.get('resume_partial_json', '').strip()
+    whisper_model_name = request.form.get('whisper_model', 'large-v3')
 
     # Validate language parameter
     if source_language not in VALID_LANGUAGES:
@@ -688,7 +705,7 @@ def upload_file():
         args = (job_id, str(filepath), filename, source_language, output_name, translate_bool)
     else:
         target_func = transcribe_with_whisper
-        args = (job_id, str(filepath), filename, source_language, output_name, resume_from_timestamp, existing_text, translate_bool)
+        args = (job_id, str(filepath), filename, source_language, output_name, resume_from_timestamp, existing_text, translate_bool, whisper_model_name)
 
     # Start processing in background thread
     thread = threading.Thread(

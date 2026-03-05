@@ -105,6 +105,12 @@ function setupEventListeners() {
             modeCards.forEach(c => c.classList.remove('selected'));
             card.classList.add('selected');
             card.querySelector('input[type="radio"]').checked = true;
+
+            // Toggle local model selector visibility
+            const whisperModelGroup = document.getElementById('whisperModelGroup');
+            if (whisperModelGroup) {
+                whisperModelGroup.style.display = card.dataset.engine === 'whisper' ? 'flex' : 'none';
+            }
         });
     });
 }
@@ -188,6 +194,12 @@ async function doUpload(file, language, engine, outputName, resumePartialJson, t
     formData.append('engine', engine);
     formData.append('output_name', outputName);
     formData.append('translate', translate ? 'true' : 'false');
+    if (engine === 'whisper') {
+        const whisperModelSelect = document.getElementById('whisperModelSelect');
+        if (whisperModelSelect) {
+            formData.append('whisper_model', whisperModelSelect.value);
+        }
+    }
     if (resumePartialJson) {
         formData.append('resume_partial_json', resumePartialJson);
     }

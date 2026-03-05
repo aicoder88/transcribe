@@ -127,6 +127,18 @@
                         </select>
                     </div>
 
+                    <!-- Whisper Model Selection -->
+                    <div class="option-group" id="whisperModelGroup">
+                        <label>Local Model</label>
+                        <select id="whisperModelSelect" class="option-select">
+                            <option value="large-v3" selected>large-v3 (Accurate HQ)</option>
+                            <option value="large-v3-turbo">turbo (Fast & Accurate)</option>
+                            <option value="distil-large-v3">distil-large-v3 (EN Fast)</option>
+                            <option value="base.en">base.en (EN very fast)</option>
+                            <option value="tiny.en">tiny.en (EN fastest)</option>
+                        </select>
+                    </div>
+
                     <!-- Output Name -->
                     <div class="option-group output-name-group">
                         <label>Output Name</label>
