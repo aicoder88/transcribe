@@ -402,10 +402,14 @@ def transcribe_with_deepgram(job_id, audio_path, filename, source_language, outp
         # Get transcription in source language
         params = {
             "model": "nova-2",
-            "language": dg_lang,
             "punctuate": "true",
             "paragraphs": "true"
         }
+        
+        if dg_lang == "auto":
+            params["detect_language"] = "true"
+        else:
+            params["language"] = dg_lang
 
         with httpx.Client(timeout=300.0) as client:
             response = client.post(

@@ -127,6 +127,24 @@ body {
     z-index: 1;
 }
 
+main {
+    display: grid;
+    grid-template-columns: 1fr;
+    grid-gap: 2rem;
+    align-items: start;
+    width: 100%;
+}
+
+@media (min-width: 1024px) {
+    .app-container {
+        max-width: 1200px;
+    }
+
+    main {
+        grid-template-columns: 6fr 4fr;
+    }
+}
+
 /* Typography */
 h1,
 h2,
