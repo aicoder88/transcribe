@@ -702,6 +702,13 @@ def upload_file():
             jobs[job_id]["status"] = "error"
             jobs[job_id]["error"] = "Deepgram API key not configured"
             return jsonify({"job_id": job_id, "filename": filename})
+        
+        # RESTRICTION: Deepgram can only be used for non-English languages
+        if source_language == "en":
+            jobs[job_id]["status"] = "error"
+            jobs[job_id]["error"] = "RESTRICTED: Deepgram may only be used for non-English languages. Please use Whisper for English."
+            return jsonify({"job_id": job_id, "filename": filename})
+            
         target_func = transcribe_with_deepgram
         args = (job_id, str(filepath), filename, source_language, output_name, translate_bool)
     elif engine == "openai":
@@ -838,6 +845,117 @@ def health():
         "deepgram_configured": bool(DEEPGRAM_API_KEY),
         "openai_configured": bool(OPENAI_API_KEY)
     })
+
+
+@app.route('/youtube', methods=['POST'])
+def youtube_transcribe():
+    """Download YouTube audio and start transcription"""
+    global job_counter
+    
+    data = request.json
+    url = data.get('url', '').strip()
+    if not url:
+        return jsonify({"error": "No YouTube URL provided"}), 400
+
+    # Get options
+    source_language = data.get('language', 'auto')
+    engine = data.get('engine', 'whisper')
+    whisper_model_name = data.get('whisper_model', 'large-v3')
+    translate_bool = data.get('translate', True)
+
+    try:
+        # Step 1: Get info from YouTube
+        ytdlp_path = "./venv/bin/yt-dlp" # Prefer the one in venv
+        if not os.path.exists(ytdlp_path):
+            ytdlp_path = "yt-dlp"
+
+        # Get Title
+        title_cmd = [ytdlp_path, "--get-title", url]
+        title_proc = subprocess.run(title_cmd, capture_output=True, text=True)
+        if title_proc.returncode != 0:
+            return jsonify({"error": f"YouTube info error: {title_proc.stderr}"}), 400
+        
+        video_title = title_proc.stdout.strip().replace("/", "_").replace("\\", "_").replace(":", "_")
+        video_id_cmd = [ytdlp_path, "--get-id", url]
+        id_proc = subprocess.run(video_id_cmd, capture_output=True, text=True)
+        video_id = id_proc.stdout.strip()
+        
+        # Unique safe filename
+        safe_title = "".join([c for c in video_title if c.isalnum() or c in (' ', '.', '_', '-')]).strip()
+        safe_title = safe_title.replace(" ", "_")
+        filename = f"{safe_title}_{video_id}.mp3"
+        filepath = UPLOAD_FOLDER / filename
+
+        # Create job
+        with job_lock:
+            job_counter += 1
+            job_id = job_counter
+
+        jobs[job_id] = {
+            "id": job_id,
+            "filename": filename,
+            "status": "queued",
+            "progress": 1,
+            "current_task": "Initializing Download...",
+            "transcription": None,
+            "translation": None,
+            "files": {},
+            "start_time": time.time(),
+            "first_segment_time": None,
+            "audio_duration": None,
+            "estimated_remaining": None,
+            "output_folder": str(OUTPUT_FOLDER.resolve()),
+            "engine": engine
+        }
+
+        # Start download in background, then transcribe
+        def download_and_process():
+            try:
+                update_job(job_id, status="processing", progress=2, current_task="Downloading from YouTube...")
+                
+                download_cmd = [
+                    ytdlp_path,
+                    "-x", "--audio-format", "mp3",
+                    "--concurrent-fragments", "8",
+                    "-o", str(filepath),
+                    url
+                ]
+                
+                dl_proc = subprocess.run(download_cmd, capture_output=True, text=True)
+                if dl_proc.returncode != 0:
+                    update_job(job_id, status="error", error=f"Download failed: {dl_proc.stderr}")
+                    return
+
+                # Choose processing function based on engine
+                if engine == "deepgram":
+                    if source_language == "en":
+                        update_job(job_id, status="error", error="RESTRICTED: Deepgram may only be used for non-English languages.")
+                        return
+                    target_func = transcribe_with_deepgram
+                    target_args = (job_id, str(filepath), filename, source_language, safe_title, translate_bool)
+                elif engine == "openai":
+                    target_func = transcribe_with_openai
+                    target_args = (job_id, str(filepath), filename, source_language, safe_title, translate_bool)
+                else:
+                    target_func = transcribe_with_whisper
+                    target_args = (job_id, str(filepath), filename, source_language, safe_title, 0.0, None, translate_bool, whisper_model_name)
+                
+                # Execute transcription
+                target_func(*target_args)
+                
+            except Exception as e:
+                update_job(job_id, status="error", error=str(e))
+                logger.error(f"YouTube processing error for {url}: {e}")
+
+        thread = threading.Thread(target=download_and_process)
+        thread.daemon = True
+        thread.start()
+
+        return jsonify({"job_id": job_id, "filename": filename, "title": video_title})
+
+    except Exception as e:
+        logger.error(f"YouTube start error: {e}")
+        return jsonify({"error": str(e)}), 500
 
 
 @app.route('/config')

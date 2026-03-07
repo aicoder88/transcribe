@@ -113,6 +113,89 @@ function setupEventListeners() {
             }
         });
     });
+
+    // YouTube button
+    const youtubeBtn = document.getElementById('youtubeBtn');
+    if (youtubeBtn) {
+        youtubeBtn.addEventListener('click', async () => {
+            const youtubeUrl = document.getElementById('youtubeUrl');
+            const url = youtubeUrl.value.trim();
+            if (!url) {
+                alert('Please enter a YouTube URL');
+                return;
+            }
+
+            youtubeBtn.disabled = true;
+            youtubeBtn.textContent = 'Starting...';
+
+            try {
+                await startYoutubeTranscription(url);
+                youtubeUrl.value = '';
+            } catch (error) {
+                console.error('YouTube error:', error);
+                alert(`Error: ${error.message}`);
+            } finally {
+                youtubeBtn.disabled = false;
+                youtubeBtn.textContent = 'Transcribe YouTube';
+            }
+        });
+    }
+}
+
+async function startYoutubeTranscription(url) {
+    const languageSelect = document.getElementById('languageSelect');
+    const selectedEngine = document.querySelector('input[name="engine"]:checked');
+    const whisperModelSelect = document.getElementById('whisperModelSelect');
+    const translateCheckbox = document.getElementById('translateCheckbox');
+
+    const language = languageSelect.value;
+    const engine = selectedEngine ? selectedEngine.value : 'whisper';
+    const whisperModel = whisperModelSelect ? whisperModelSelect.value : 'large-v3';
+    const translate = translateCheckbox ? translateCheckbox.checked : true;
+
+    // RESTRICTION: Deepgram can only be used for non-English languages
+    if (engine === 'deepgram' && language === 'en') {
+        alert("Deepgram is restricted for English transcription. Please use Whisper instead.");
+        return;
+    }
+
+    const payload = {
+        url: url,
+        language: language,
+        engine: engine,
+        whisper_model: whisperModel,
+        translate: translate
+    };
+
+    const response = await fetch('/youtube', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+    });
+
+    if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to start YouTube transcription');
+    }
+
+    const data = await response.json();
+    const jobId = data.job_id;
+
+    // Show jobs section
+    jobsSection.style.display = 'block';
+
+    // Create job card
+    createJobCard(jobId, data.title || url, language);
+
+    // Store job
+    jobs.set(jobId, {
+        filename: data.filename || url,
+        status: 'queued',
+        autoDetect: language === 'auto'
+    });
+
+    // Start polling
+    startPolling();
 }
 
 async function handleFiles(files) {
@@ -184,6 +267,13 @@ async function uploadFile(file) {
     }
 
     const translateCheckbox = document.getElementById('translateCheckbox');
+
+    // RESTRICTION: Deepgram can only be used for non-English languages
+    if (selectedEngine && selectedEngine.value === 'deepgram' && languageSelect.value === 'en') {
+        alert("Deepgram is restricted for English transcription. Please use Whisper instead, or choose a different language.");
+        return;
+    }
+
     await doUpload(file, languageSelect.value, selectedEngine ? selectedEngine.value : 'whisper', outputName.value.trim(), null, translateCheckbox ? translateCheckbox.checked : true);
 }
 

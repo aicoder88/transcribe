@@ -51,6 +51,20 @@
                 </div>
                 <input type="file" id="fileInput" accept="audio/*" multiple hidden>
 
+                + <!-- YouTube Download Section -->
+                + <div class="youtube-section"
+                    style="margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px solid rgba(255, 255, 255, 0.1);">
+                    + <div class="option-group" style="width: 100%;">
+                        + <label>YouTube Video URL</label>
+                        + <div style="display: flex; gap: 0.75rem;">
+                            + <input type="text" id="youtubeUrl" class="option-input"
+                                placeholder="https://www.youtube.com/watch?v=..." style="flex: 1;">
+                            + <button id="youtubeBtn" class="btn btn-primary" style="white-space: nowrap;">Transcribe
+                                YouTube</button>
+                            + </div>
+                        + </div>
+                    + </div>
+
                 <!-- Mode Selection Cards -->
                 <div class="mode-section">
                     <h4 class="section-label">Processing Mode</h4>
